@@ -2,22 +2,22 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 
 export const RecipeForm = () => {
-    /*
-        TODO: Add the correct default properties to the
-        initial state object
-    */
+    
+        //TODO: Add the correct default properties to the
+        //initial state object
+    
     const [recipe, update] = useState({
-        recipeName : "",
-        description : "",
-        instruction : "",
+        recipeName: "",
+        description: "",
+        instruction: "",
         imageURL: "" // Add the imageURL property to the initial state
     })
+
     
-    /*
-        TODO: Use the useNavigation() hook so you can redirect
-        the user to the recipe list
-    */
-   const navigate = useNavigate()
+        //TODO: Use the useNavigation() hook so you can redirect
+        //the user to the recipe list
+    
+    const navigate = useNavigate()
 
     const localCookhubUser = localStorage.getItem("cookhub_user")
     const cookhubUserObject = JSON.parse(localCookhubUser)
@@ -27,14 +27,14 @@ export const RecipeForm = () => {
 
         // TODO: Create the object to be saved to the API
 
-       const recipeToSendToAPI = {
+        const recipeToSendToAPI = {
             id: 0,
             recipeName: recipe.recipeName,
             imageURL: recipe.imageURL, // Include the imageURL in the object to be sent to the API
             description: recipe.description,
             instruction: recipe.instruction,
             userId: cookhubUserObject.id,
-       }
+        }
 
         // TODO: Perform the fetch() to POST the object to the API
         return fetch(`http://localhost:8088/recipes`, {
@@ -64,7 +64,7 @@ export const RecipeForm = () => {
                         value={recipe.recipeName}
                         onChange={
                             (evt) => {
-                                const copy = {...recipe}
+                                const copy = { ...recipe }
                                 copy.recipeName = evt.target.value
                                 update(copy)
                             }
@@ -73,21 +73,21 @@ export const RecipeForm = () => {
             </fieldset>
 
             <fieldset>
-        <div className="form-group">
-          <label htmlFor="imageURL">Image URL:</label>
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Enter image URL"
-            value={recipe.imageURL}
-            onChange={(evt) => {
-              const copy = { ...recipe };
-              copy.imageURL = evt.target.value;
-              update(copy);
-            }}
-          />
-        </div>
-      </fieldset>
+                <div className="form-group">
+                    <label htmlFor="imageURL">Image URL:</label>
+                    <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Enter image URL"
+                        value={recipe.imageURL}
+                        onChange={(evt) => {
+                            const copy = { ...recipe };
+                            copy.imageURL = evt.target.value;
+                            update(copy);
+                        }}
+                    />
+                </div>
+            </fieldset>
 
             <fieldset>
                 <div className="form-group">
@@ -100,13 +100,15 @@ export const RecipeForm = () => {
                         value={recipe.description}
                         onChange={
                             (evt) => {
-                                const copy = {...recipe}
+                                const copy = { ...recipe }
                                 copy.description = evt.target.value
                                 update(copy)
                             }
                         } />
                 </div>
             </fieldset>
+
+
             <fieldset>
                 <div className="form-group">
                     <label htmlFor="instruction">Instruction:</label>
@@ -118,7 +120,7 @@ export const RecipeForm = () => {
                         value={recipe.instruction}
                         onChange={
                             (evt) => {
-                                const copy = {...recipe}
+                                const copy = { ...recipe }
                                 copy.instruction = evt.target.value
                                 update(copy)
                             }
@@ -126,9 +128,9 @@ export const RecipeForm = () => {
                 </div>
             </fieldset>
 
-            <button 
-            onClick={(clickEvent) => handleSaveButtonClick(clickEvent)}
-            className="btn btn-primary">
+            <button
+                onClick={(clickEvent) => handleSaveButtonClick(clickEvent)}
+                className="btn btn-primary">
                 Submit New Recipe
             </button>
         </form>

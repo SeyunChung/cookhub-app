@@ -4,6 +4,7 @@ import "./Login.css"
 
 export const Register = (props) => {
     const [customer, setCustomer] = useState({
+        id: 0,
         email: "",
         fullName: "",
         isStaff: false
