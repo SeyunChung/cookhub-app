@@ -13,6 +13,9 @@ export const RecipeForm = () => {
   const [ingredients, setIngredients] = useState([]);
   const navigate = useNavigate();
 
+  const localCookhubUser = localStorage.getItem("cookhub_user")
+  const cookhubUserObject = JSON.parse(localCookhubUser)
+
   useEffect(() => {
     fetch("http://localhost:8088/ingredients")
       .then((response) => response.json())
@@ -53,6 +56,7 @@ export const RecipeForm = () => {
 
     const recipeToSendToAPI = {
       id: 0,
+      userId: cookhubUserObject.id,
       recipeName: recipe.recipeName,
       imageURL: recipe.imageURL,
       description: recipe.description,
