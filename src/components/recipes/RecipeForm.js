@@ -1,54 +1,102 @@
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export const RecipeForm = () => {
-    
-        //TODO: Add the correct default properties to the
-        //initial state object
-    
-    const [recipe, update] = useState({
+    const [recipe, setRecipe] = useState({
         recipeName: "",
         description: "",
         instruction: "",
-        imageURL: "" // Add the imageURL property to the initial state
-    })
+        imageURL: "",
+        ingredient: [],
+    });
 
-    
-        //TODO: Use the useNavigation() hook so you can redirect
-        //the user to the recipe list
-    
-    const navigate = useNavigate()
+    const [ingredients, setIngredients] = useState([]);
+    const navigate = useNavigate();
 
-    const localCookhubUser = localStorage.getItem("cookhub_user")
-    const cookhubUserObject = JSON.parse(localCookhubUser)
+    useEffect(() => {
+        fetch("http://localhost:8088/ingredients")
+            .then((response) => response.json())
+            .then((ingredientData) => {
+                setIngredients(ingredientData);
+                // Set initial value of ingredient in recipe state
+                setRecipe((prevRecipe) => ({
+                    ...prevRecipe,
+                    ingredient: ingredientData.length > 0 ? ingredientData[0].id.toString() : ""
+                }));
+            })
+            .catch((error) => {
+                console.error("Error fetching ingredients:", error);
+            });
+    }, []);
+    
+    const handleInputChange = (e) => {
+        const { name, value, options } = e.target;
+    
+        // Check if the input field is the ingredient dropdown
+        if (name === 'ingredient') {
+            const selectedIngredients = Array.from(options)
+                .filter(option => option.selected)
+                .map(option => option.value);
+    
+            setRecipe((prevRecipe) => ({
+                ...prevRecipe,
+                [name]: selectedIngredients,
+            }));
+        } else {
+            setRecipe((prevRecipe) => ({
+                ...prevRecipe,
+                [name]: value,
+            }));
+        }
+    };
+    
 
     const handleSaveButtonClick = (event) => {
-        event.preventDefault()
-
-        // TODO: Create the object to be saved to the API
-
+        event.preventDefault();
+    
         const recipeToSendToAPI = {
-            id: 0,
             recipeName: recipe.recipeName,
-            imageURL: recipe.imageURL, // Include the imageURL in the object to be sent to the API
+            imageURL: recipe.imageURL,
             description: recipe.description,
             instruction: recipe.instruction,
-            userId: cookhubUserObject.id,
-        }
-
-        // TODO: Perform the fetch() to POST the object to the API
-        return fetch(`http://localhost:8088/recipes`, {
+            ingredientId: recipe.ingredient.map(id => parseInt(id))
+        };
+    
+        fetch("http://localhost:8088/recipes", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
             },
-            body: JSON.stringify(recipeToSendToAPI)
+            body: JSON.stringify(recipeToSendToAPI),
         })
-            .then(response => response.json())
-            .then(() => {
-                navigate("/recipes")
+            .then((response) => response.json())
+            .then((recipeData) => {
+                const recipeId = recipeData.id;
+    
+                const recipeIngredientsToSendToAPI = {
+                    recipeId: recipeId,
+                    ingredientId: recipe.ingredient.map(id => parseInt(id))
+                };
+    
+                fetch("http://localhost:8088/recipeIngredients", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(recipeIngredientsToSendToAPI),
+                })
+                    .then(() => {
+                        navigate("/recipes");
+                    })
+                    .catch((error) => {
+                        console.error("Error creating recipe ingredients:", error);
+                    });
             })
-    }
+            .catch((error) => {
+                console.error("Error creating recipe:", error);
+            });
+    };
+    
 
     return (
         <form className="recipeForm">
@@ -57,18 +105,15 @@ export const RecipeForm = () => {
                 <div className="form-group">
                     <label htmlFor="recipename">Name:</label>
                     <input
-                        required autoFocus
+                        required
+                        autoFocus
                         type="text"
                         className="form-control"
                         placeholder="Enter Recipe Name"
+                        name="recipeName"
                         value={recipe.recipeName}
-                        onChange={
-                            (evt) => {
-                                const copy = { ...recipe }
-                                copy.recipeName = evt.target.value
-                                update(copy)
-                            }
-                        } />
+                        onChange={handleInputChange}
+                    />
                 </div>
             </fieldset>
 
@@ -79,12 +124,9 @@ export const RecipeForm = () => {
                         type="text"
                         className="form-control"
                         placeholder="Enter image URL"
+                        name="imageURL"
                         value={recipe.imageURL}
-                        onChange={(evt) => {
-                            const copy = { ...recipe };
-                            copy.imageURL = evt.target.value;
-                            update(copy);
-                        }}
+                        onChange={handleInputChange}
                     />
                 </div>
             </fieldset>
@@ -93,46 +135,67 @@ export const RecipeForm = () => {
                 <div className="form-group">
                     <label htmlFor="description">Description:</label>
                     <input
-                        required autoFocus
+                        required
+                        autoFocus
                         type="text"
                         className="form-control"
                         placeholder="Brief description of recipe"
+                        name="description"
                         value={recipe.description}
-                        onChange={
-                            (evt) => {
-                                const copy = { ...recipe }
-                                copy.description = evt.target.value
-                                update(copy)
-                            }
-                        } />
+                        onChange={handleInputChange}
+                    />
                 </div>
             </fieldset>
+
+            <fieldset>
+    <div className="form-group">
+        <label>Ingredient:</label>
+        <select
+            name="ingredient"
+            className="form-control"
+            multiple
+            value={recipe.ingredient}
+            onChange={handleInputChange}
+        >
+            {ingredients.map((ingredient) => (
+                <option key={ingredient.id} value={ingredient.id}>
+                    {ingredient.ingredientName}
+                </option>
+            ))}
+        </select>
+    </div>
+</fieldset>
+
 
 
             <fieldset>
                 <div className="form-group">
                     <label htmlFor="instruction">Instruction:</label>
                     <input
-                        required autoFocus
+                        required
+                        autoFocus
                         type="text"
                         className="form-control"
                         placeholder="Enter Detail Recipe Instruction"
+                        name="instruction"
                         value={recipe.instruction}
-                        onChange={
-                            (evt) => {
-                                const copy = { ...recipe }
-                                copy.instruction = evt.target.value
-                                update(copy)
-                            }
-                        } />
+                        onChange={handleInputChange}
+                    />
                 </div>
             </fieldset>
 
-            <button
-                onClick={(clickEvent) => handleSaveButtonClick(clickEvent)}
-                className="btn btn-primary">
+            <button onClick={handleSaveButtonClick} className="btn btn-primary">
                 Submit New Recipe
             </button>
         </form>
-    )
-}
+    );
+};
+
+
+
+
+
+
+
+
+
