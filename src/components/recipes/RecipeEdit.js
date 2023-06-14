@@ -4,14 +4,16 @@ import { useParams, useNavigate } from "react-router-dom";
 export const RecipeEdit = () => {
   const { recipeId } = useParams();
   const navigate = useNavigate();
-  const [recipeData, setRecipeData] = useState(null);
+  const [recipeData, setRecipeData] = useState({ ingredients: [] });
   const [ingredients, setIngredients] = useState([]);
+  const [selectedIngredients, setSelectedIngredients] = useState([]);
 
   useEffect(() => {
     fetch(`http://localhost:8088/recipes/${recipeId}`)
       .then((response) => response.json())
       .then((recipeData) => {
         setRecipeData(recipeData);
+        setSelectedIngredients(recipeData.ingredientId || []);
       })
       .catch((error) => {
         console.error("Error fetching recipe data:", error);
@@ -28,36 +30,80 @@ export const RecipeEdit = () => {
   }, [recipeId]);
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setRecipeData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+    const { name, value, checked } = e.target;
+    if (name.startsWith("ingredient-")) {
+      const ingredientId = name.split("-")[1];
+      if (checked) {
+        setSelectedIngredients((prevIngredients) => [
+          ...prevIngredients,
+          parseInt(ingredientId),
+        ]);
+      } else {
+        setSelectedIngredients((prevIngredients) =>
+          prevIngredients.filter(
+            (ingredient) => ingredient !== parseInt(ingredientId)
+          )
+        );
+      }
+      setRecipeData((prevData) => ({
+        ...prevData,
+        ingredientId: selectedIngredients,
+      }));
+    } else {
+      setRecipeData((prevData) => ({
+        ...prevData,
+        [name]: value,
+      }));
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    const updatedRecipeData = {
+      ...recipeData,
+      ingredientId: selectedIngredients,
+    };
 
     fetch(`http://localhost:8088/recipes/${recipeId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(recipeData),
+      body: JSON.stringify(updatedRecipeData),
     })
       .then((response) => response.json())
       .then((updatedData) => {
         console.log("Recipe updated:", updatedData);
-        navigate("/recipes");
+
+        const recipeIngredientData = {
+          recipeId: parseInt(recipeId),
+          ingredientId: selectedIngredients,
+        };
+
+        fetch(`http://localhost:8088/recipeIngredients/${updatedData.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(recipeIngredientData),
+        })
+          .then((response) => response.json())
+          .then((updatedRecipeIngredientData) => {
+            console.log(
+              "Recipe ingredients updated:",
+              updatedRecipeIngredientData
+            );
+            navigate("/recipes");
+          })
+          .catch((error) => {
+            console.error("Error updating recipe ingredients:", error);
+          });
       })
       .catch((error) => {
         console.error("Error updating recipe:", error);
       });
   };
-
-  if (!recipeData || !ingredients) {
-    return <div>Loading...</div>;
-  }
 
   return (
     <div>
@@ -90,20 +136,20 @@ export const RecipeEdit = () => {
             onChange={handleInputChange}
           />
         </label>
-        <label>
-          Ingredients:
-          <select
-            name="ingredient"
-            value={recipeData.ingredient}
-            onChange={handleInputChange}
-          >
-            {ingredients.map((ingredient) => (
-              <option key={ingredient.id} value={ingredient.id}>
-                {ingredient.ingredientName}
-              </option>
-            ))}
-          </select>
-        </label>
+
+        {ingredients.map((ingredient) => (
+          <label key={ingredient.id}>
+            <input
+              type="checkbox"
+              name={`ingredient-${ingredient.id}`}
+              value={ingredient.id}
+              onChange={handleInputChange}
+              checked={selectedIngredients.includes(ingredient.id)}
+            />
+            {ingredient.ingredientName}
+          </label>
+        ))}
+
         <label>
           Instructions:
           <textarea
@@ -112,9 +158,9 @@ export const RecipeEdit = () => {
             onChange={handleInputChange}
           />
         </label>
+
         <button type="submit">Save Changes</button>
       </form>
     </div>
   );
-};  
-
+};
