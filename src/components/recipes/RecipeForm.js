@@ -60,8 +60,8 @@ export const RecipeForm = () => {
       recipeName: recipe.recipeName,
       imageURL: recipe.imageURL,
       description: recipe.description,
-      instruction: recipe.instruction,
-      ingredientId: recipe.ingredient.map((id) => parseInt(id)),
+      instruction: recipe.instruction/* ,
+      ingredientId: recipe.ingredient.map((id) => parseInt(id)), */
     };
 
     fetch("http://localhost:8088/recipes", {
@@ -189,4 +189,4 @@ export const RecipeForm = () => {
       </button>
     </form>
   );
-};
+}; 

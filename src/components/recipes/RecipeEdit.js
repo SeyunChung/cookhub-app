@@ -13,7 +13,7 @@ export const RecipeEdit = () => {
       .then((response) => response.json())
       .then((recipeData) => {
         setRecipeData(recipeData);
-        setSelectedIngredients(recipeData.ingredientId || []);
+        setSelectedIngredients(recipeData.ingredients || []);
       })
       .catch((error) => {
         console.error("Error fetching recipe data:", error);
@@ -47,7 +47,7 @@ export const RecipeEdit = () => {
       }
       setRecipeData((prevData) => ({
         ...prevData,
-        ingredientId: selectedIngredients,
+        ingredients: selectedIngredients,
       }));
     } else {
       setRecipeData((prevData) => ({
@@ -62,7 +62,7 @@ export const RecipeEdit = () => {
 
     const updatedRecipeData = {
       ...recipeData,
-      ingredientId: selectedIngredients,
+      ingredients: selectedIngredients,
     };
 
     fetch(`http://localhost:8088/recipes/${recipeId}`, {
@@ -70,7 +70,8 @@ export const RecipeEdit = () => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(updatedRecipeData),
+      body: JSON.stringify({ ...updatedRecipeData, ingredients: undefined }),
+      /* body: JSON.stringify(updatedRecipeData), */
     })
       .then((response) => response.json())
       .then((updatedData) => {
